@@ -39,21 +39,6 @@ def handle_connect(client, userdata, flags, rc):
     else:
         print('Bad connection. Code:', rc)
 
-@mqtt.on_message()
-def handle_mqtt_message(client, userdata, message):
-    data = {
-        'topic': message.topic,
-        'payload': message.payload.decode('utf-8')
-    }
-    if message.topic == 't':
-        cache.set("room_temp", message.payload.decode('utf-8'))
-
-    if message.topic == 'h':
-        cache.set("room_humidity", message.payload.decode('utf-8'))
-
-    print('Received message on topic: {topic} with payload: {payload}'.format(**data))
-    socketio.emit('mqtt_message', data=data)
-
 @mqtt.on_subscribe()
 def on_subscribe(client, userdata, mid, granted_qos):
     print('Subscribed userdata mid {} with QoS: {}'.format( mid, granted_qos))

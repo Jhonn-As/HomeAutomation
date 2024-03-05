@@ -3,11 +3,26 @@ from .models import db, UserHome, Boards, Actuators, LockActions
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from .utils import Action, admin_required
-from .mqtt_client import cache
+from .mqtt_client import mqtt, socketio, cache
 
 bp = Blueprint('api', __name__, url_prefix='/api')
 
+@mqtt.on_message()
+def handle_mqtt_message(client, userdata, message):
+    data = {
+        'topic': message.topic,
+        'payload': message.payload.decode('utf-8')
+    }
+    if message.topic == 't':
+        cache.set("room_temp", message.payload.decode('utf-8'))
 
+    if message.topic == 'h':
+        cache.set("room_humidity", message.payload.decode('utf-8'))
+
+    print('Received message on topic: {topic} with payload: {payload}'.format(**data))
+    response = update_actuator_state(message.topic) # outside of application context.
+    socketio.emit('mqtt_message', data=response)
+    
 ##################################            ##################################
 ##################################   USERS    ##################################
 ##################################            ##################################
